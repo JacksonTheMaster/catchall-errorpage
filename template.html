@@ -5,39 +5,224 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Error {{.StatusCode}}</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            background-color: #1a1a1a;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #2a2a2a 100%);
             color: #ffffff;
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
+            overflow: hidden;
+            position: relative;
         }
+
         .error-container {
             text-align: center;
-            padding: 20px;
-            border: 1px solid #444;
-            border-radius: 8px;
-            background-color: #2a2a2a;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            background: rgba(42, 42, 42, 0.8);
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            max-width: 800px;
+            width: 95%;
+            position: relative;
+            z-index: 2;
+            animation: slideIn 0.8s ease-out;
+            transition: all 0.3s ease;
         }
-        img {
-            max-width: 100%;
+
+        .error-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 
+                0 12px 40px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .error-image {
+            max-width: min(80vw, 600px);
+            max-height: 60vh;
+            width: auto;
             height: auto;
+            margin-bottom: 2rem;
+            border-radius: 16px;
+            filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.4));
+            transition: all 0.4s ease;
+            object-fit: contain;
         }
-        h1 {
-            font-size: 2em;
-            margin: 20px 0;
+
+        .error-image:hover {
+            transform: scale(1.02);
+            filter: drop-shadow(0 12px 32px rgba(0, 0, 0, 0.5));
+        }
+
+        .status-code {
+            font-size: clamp(2rem, 6vw, 4rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24, #ff9ff3, #54a0ff);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.8rem;
+            animation: gradientShift 3s ease-in-out infinite;
+            text-shadow: 0 0 30px rgba(255, 107, 107, 0.3);
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .error-message {
+            font-size: clamp(1rem, 3vw, 1.4rem);
+            font-weight: 300;
+            margin-bottom: 1.5rem;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.4;
+            letter-spacing: 0.5px;
+        }
+
+        .error-description {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .error-container {
+                padding: 2rem 1.5rem;
+                margin: 1rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 200px;
+            }
+        }
+
+        /* Glitch effect for status code on hover */
+        .status-code:hover {
+            animation: glitch 0.3s ease-in-out;
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
         }
     </style>
 </head>
 <body>
+
     <div class="error-container">
         {{if .ImageExists}}
-        <img src="/images/{{.StatusCode}}{{.ImageExt}}" alt="Error {{.StatusCode}}">
+        <img src="/images/{{.StatusCode}}{{.ImageExt}}" alt="Error {{.StatusCode}}" class="error-image">
+        {{else}}
+        <div class="status-code">{{.StatusCode}}</div>
+        <div class="error-message">{{.ErrorMessage}}</div>
         {{end}}
-        <h1>{{.StatusCode}} - {{.ErrorMessage}}</h1>
+        <div class="error-description">
+            Something went wrong, but don't worry - these things happen. 
+            You can try refreshing the page or simply go back to where you came from.
+        </div>
+        
+        <div class="action-buttons">
+            <a href="javascript:history.back()" class="btn btn-secondary">← Go Back</a>
+        </div>
     </div>
 </body>
 </html>
