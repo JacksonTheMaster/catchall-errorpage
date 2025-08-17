@@ -12,6 +12,8 @@ import (
 	"strings"
 )
 
+var imagePath, imageExt string
+
 func main() {
 	// Register static file server for images once
 	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("images"))))
@@ -75,65 +77,25 @@ func sendJSONError(w http.ResponseWriter, statusCode int, message string) {
 }
 
 func serveHTML(w http.ResponseWriter, statusCode int) {
-	// Check if image exists
-	imagePath := filepath.Join("images", fmt.Sprintf("%d.jpg", statusCode))
-	log.Printf("Checking image existence at path: %s", imagePath)
-	imageExists := true
-	if _, err := os.Stat(imagePath); err != nil {
-		imageExists = false
-		log.Printf("Image check failed: %v", err)
-	} else {
-		log.Println("Image exists")
+	// Check for image with .png, .jpg, or .gif extension
+	extensions := []string{".png", ".jpg", ".gif"}
+	imageExists := false
+	for _, ext := range extensions {
+		path := filepath.Join("images", fmt.Sprintf("%d%s", statusCode, ext))
+		log.Printf("Checking image existence at path: %s", path)
+		if _, err := os.Stat(path); err == nil {
+			imagePath = path
+			imageExt = ext
+			imageExists = true
+			log.Println("Image exists")
+			break
+		} else {
+			log.Printf("Image check failed for %s: %v", path, err)
+		}
 	}
 
-	// HTML template with dark mode and centered div
-	tmpl := `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Error {{.StatusCode}}</title>
-    <style>
-        body {
-            background-color: #1a1a1a;
-            color: #ffffff;
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .error-container {
-            text-align: center;
-            padding: 20px;
-            border: 1px solid #444;
-            border-radius: 8px;
-            background-color: #2a2a2a;
-        }
-        img {
-            max-width: 100%;
-            height: auto;
-        }
-        h1 {
-            font-size: 2em;
-            margin: 20px 0;
-        }
-    </style>
-</head>
-<body>
-    <div class="error-container">
-        {{if .ImageExists}}
-        <img src="/images/{{.StatusCode}}.jpg" alt="Error {{.StatusCode}}">
-        {{end}}
-        <h1>{{.StatusCode}} - {{.ErrorMessage}}</h1>
-    </div>
-</body>
-</html>`
-
-	// Parse and execute template
-	t, err := template.New("error").Parse(tmpl)
+	// Load and parse the HTML template
+	t, err := template.ParseFiles("template.html")
 	if err != nil {
 		log.Printf("Failed to parse template: %v", err)
 		sendJSONError(w, http.StatusInternalServerError, "Failed to render template")
@@ -147,10 +109,12 @@ func serveHTML(w http.ResponseWriter, statusCode int) {
 		StatusCode   int
 		ErrorMessage string
 		ImageExists  bool
+		ImageExt     string
 	}{
 		StatusCode:   statusCode,
 		ErrorMessage: http.StatusText(statusCode),
 		ImageExists:  imageExists,
+		ImageExt:     imageExt,
 	}
 	if err := t.Execute(w, data); err != nil {
 		log.Printf("Failed to execute template: %v", err)
