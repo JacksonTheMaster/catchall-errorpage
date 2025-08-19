@@ -22,8 +22,7 @@ FROM alpine:3.20
 WORKDIR /app
 
 # Copy the built binary and UI files from the builder stage
-COPY --from=builder /app/errorpage .
-COPY --from=builder /app/UI ./UI
+COPY --from=builder /app .
 
 # Ensure the binary is executable
 RUN chmod +x errorpage
