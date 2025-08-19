@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -11,8 +12,6 @@ import (
 	"strconv"
 	"strings"
 )
-
-var imagePath, imageExt string
 
 // statusDescriptions maps HTTP status codes to their IANA-like descriptions
 var statusDescriptions = map[int]string{
@@ -82,9 +81,6 @@ var statusDescriptions = map[int]string{
 }
 
 func main() {
-	// Register static file server for images once
-	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("images"))))
-
 	// Register main handler
 	http.HandleFunc("/", handleRequest)
 
@@ -146,15 +142,28 @@ func sendJSONError(w http.ResponseWriter, statusCode int, message string) {
 func serveHTML(w http.ResponseWriter, statusCode int) {
 	// Check for image with .png, .jpg, or .gif extension
 	extensions := []string{".png", ".jpg", ".gif"}
+	var imageData string
+	var mimeType string
 	imageExists := false
+
 	for _, ext := range extensions {
 		path := filepath.Join("images", fmt.Sprintf("%d%s", statusCode, ext))
 		log.Printf("Checking image existence at path: %s", path)
-		if _, err := os.Stat(path); err == nil {
-			imagePath = path
-			imageExt = ext
+		data, err := os.ReadFile(path)
+		if err == nil {
+			// Determine MIME type based on extension
+			switch ext {
+			case ".png":
+				mimeType = "image/png"
+			case ".jpg":
+				mimeType = "image/jpeg"
+			case ".gif":
+				mimeType = "image/gif"
+			}
+			// Encode image data to base64
+			imageData = base64.StdEncoding.EncodeToString(data)
 			imageExists = true
-			log.Println("Image exists")
+			log.Println("Image exists and encoded to base64")
 			break
 		} else {
 			log.Printf("Image check failed for %s: %v", path, err)
@@ -183,13 +192,15 @@ func serveHTML(w http.ResponseWriter, statusCode int) {
 		ErrorMessage string
 		Description  string
 		ImageExists  bool
-		ImageExt     string
+		ImageData    string
+		MimeType     string
 	}{
 		StatusCode:   statusCode,
 		ErrorMessage: http.StatusText(statusCode),
 		Description:  description,
 		ImageExists:  imageExists,
-		ImageExt:     imageExt,
+		ImageData:    imageData,
+		MimeType:     mimeType,
 	}
 	if err := t.Execute(w, data); err != nil {
 		log.Printf("Failed to execute template: %v", err)

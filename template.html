@@ -207,10 +207,9 @@
     </style>
 </head>
 <body>
-
     <div class="error-container">
         {{if .ImageExists}}
-        <img src="/images/{{.StatusCode}}{{.ImageExt}}" alt="Error {{.StatusCode}}" class="error-image">
+        <img src="data:{{.MimeType}};base64,{{.ImageData}}" alt="Error {{.StatusCode}}" class="error-image">
         {{else}}
         <div class="status-code">{{.StatusCode}}</div>
         <div class="error-message">{{.ErrorMessage}}</div>
