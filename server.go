@@ -170,10 +170,28 @@ func serveHTML(w http.ResponseWriter, statusCode int) {
 		}
 	}
 
+	// Determine template file based on PAGE_THEME env var
+	validThemes := map[string]bool{
+		"xp.html": true,
+		"7.html":  true,
+		"98.html": true,
+	}
+	templateFile := "classic.html"
+	if theme := os.Getenv("PAGE_THEME"); theme != "" {
+		if validThemes[theme] {
+			templateFile = theme
+			log.Printf("Using theme from PAGE_THEME: %s", templateFile)
+		} else {
+			log.Printf("Invalid PAGE_THEME value: %s, falling back to %s", theme, templateFile)
+		}
+	} else {
+		log.Printf("PAGE_THEME not set, using default: %s", templateFile)
+	}
+
 	// Load and parse the HTML template
-	t, err := template.ParseFiles("template.html")
+	t, err := template.ParseFiles(templateFile)
 	if err != nil {
-		log.Printf("Failed to parse template: %v", err)
+		log.Printf("Failed to parse template %s: %v", templateFile, err)
 		sendJSONError(w, http.StatusInternalServerError, "Failed to render template")
 		return
 	}
